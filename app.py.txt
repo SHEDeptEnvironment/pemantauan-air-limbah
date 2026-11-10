@@ -1,0 +1,224 @@
+import datetime
+import os
+import pandas as pd
+import streamlit as st
+
+# Konfigurasi Halaman Web
+st.set_page_config(
+    page_title="Sistem Pemantauan Sampling Air Limbah",
+    page_icon="💧",
+    layout="wide",
+)
+
+# File database lokal untuk menyimpan data bersama
+DB_FILE = "data_sampling_limbah.csv"
+
+
+def load_data():
+  if os.path.exists(DB_FILE):
+    return pd.read_csv(DB_FILE)
+  else:
+    return pd.DataFrame(
+        columns=[
+            "Timestamp",
+            "Petugas",
+            "Titik Sampling",
+            "Cuaca",
+            "Kondisi Aliran",
+            "Karakteristik Fisik",
+            "Kondisi Area/Aktivitas",
+            "Kondisi IPAL",
+            "Kondisi Kolam Filtrasi",
+            "Keamanan & Jalur",
+            "Potensi Kontaminasi",
+            "Catatan",
+        ]
+    )
+
+
+def save_data(new_data):
+  df = load_data()
+  df = pd.concat([df, pd.DataFrame([new_data])], ignore_index=True)
+  df.to_csv(DB_FILE, index=False)
+
+
+# Header Aplikasi
+st.title("💧 Aplikasi Pemantauan Lingkungan & Lokasi Sampling Air Limbah")
+st.markdown(
+    "Gunakan halaman ini untuk melakukan checklist kondisi lapangan secara"
+    " kolaboratif. Semua data tim akan terekam secara terpusat."
+)
+
+# Navigasi Menu
+menu = st.sidebar.selectbox(
+    "Pilih Menu", ["📝 Input Checklist Baru", "📊 Lihat Riwayat & Data Tim"]
+)
+
+df_db = load_data()
+
+if menu == "📝 Input Checklist Baru":
+  st.subheader("Formulir Pemantauan Kondisi Lapangan")
+
+  with st.form("form_sampling"):
+    col1, col2 = st.columns(2)
+
+    with col1:
+      petugas = st.text_input("Nama Petugas / Sampler")
+      titik_sampling = st.selectbox(
+          "Nama / Lokasi Titik Sampling",
+          [
+              "Outlet Utama IPAL",
+              "Inlet Produksi",
+              "Bak Kontrol Akhir",
+              "Sumur Pantau",
+              "Lainnya",
+          ],
+      )
+
+    with col2:
+      tanggal_sampling = st.date_input(
+          "Tanggal Sampling", datetime.date.today()
+      )
+      jam_sampling = st.time_input("Jam Sampling", datetime.datetime.now().time())
+      cuaca = st.selectbox(
+          "Kondisi Cuaca", ["Cerah", "Mendung", "Hujan Ringan", "Hujan Lebat"]
+      )
+
+    st.markdown("---")
+    st.markdown("### 📋 Parameter Checklist Lapangan")
+
+    col_a, col_b = st.columns(2)
+
+    with col_a:
+      kondisi_aliran = st.selectbox(
+          "1. Kondisi Aliran Air Limbah",
+          ["Normal", "Meluap / Banjir", "Tersendat / Lambat", "Surut / Kering"],
+      )
+
+      # Karakteristik Fisik
+      st.markdown("**2. Karakteristik Visual & Fisik Air**")
+      warna = st.text_input("Warna Air (Contoh: Bening, Kecoklatan, Kehitaman)")
+      bau = st.text_input("Bau Air (Contoh: Normal, Menyengat, Bau Blotong/Limbah)")
+      buih = st.radio("Keberadaan Buih / Busa", ["Tidak Ada", "Ada"], horizontal=True)
+      minyak = st.radio(
+          "Lapisan Minyak di Permukaan", ["Tidak Ada", "Ada"], horizontal=True
+      )
+      karakteristik_ fisik_str = (
+          f"Warna: {warna}, Bau: {bau}, Buih: {buih}, Minyak: {minyak}"
+      )
+
+      kondisi_area = st.selectbox(
+          "3. Kondisi Area & Aktivitas",
+          [
+              "Beroperasi Normal (Produksi Aktif)",
+              "Ada Aktivitas Pemeliharaan / Maintenance",
+              "Kosong / Libur / Tidak Ada Aktivitas",
+          ],
+      )
+
+    with col_b:
+      kondisi_ipal = st.selectbox(
+          "4. Kondisi Sistem IPAL",
+          [
+              "Beroperasi Normal",
+              "Ada Kerusakan Alat / Pompa",
+              "Sedang Maintenance / Pengurasan",
+          ],
+      )
+
+      kondisi_kolam = st.selectbox(
+          "5. Kondisi Kolam Filtrasi / Bak",
+          [
+              "Normal (Bersih / Berfungsi)",
+              "Endapan Lumpur Berlebih",
+              "Lumut / Alga Tebal",
+              "Ada Sumbatan / Sampah",
+          ],
+      )
+
+      keamanan = st.selectbox(
+          "6. Keamanan Jalur & Titik Sampling",
+          [
+              "Aman & Akses Mudah",
+              "Licin / Berbahaya",
+              "Potensi Gas Beracun (H2S/Ammonia)",
+              "Pagar Pengaman / Tangga Rusak",
+          ],
+      )
+
+      kontaminasi = st.selectbox(
+          "7. Potensi Kontaminasi Eksternal",
+          [
+              "Tidak Ada",
+              "Ada Air Limpasan Hujan (Runoff) Masuk Saluran",
+              "Ada Pencemaran dari Aktivitas Lain",
+          ],
+      )
+
+    st.markdown("---")
+    catatan = st.text_area(
+        "Catatan Lapangan Tambahan / Temuan Khusus",
+        placeholder="Tuliskan jika ada temuan tidak biasa di lapangan...",
+    )
+
+    submit_button = st.form_submit_button(
+        label="💾 Simpan & Kirim Data Checklist"
+    )
+
+    if submit_button:
+      if not petugas:
+        st.warning("Mohon isi nama petugas terlebih dahulu!")
+      else:
+        timestamp_str = f"{tanggal_sampling} {jam_sampling.strftime('%H:%M')}"
+        data_baru = {
+            "Timestamp": timestamp_str,
+            "Petugas": petugas,
+            "Titik Sampling": titik_sampling,
+            "Cuaca": cuaca,
+            "Kondisi Aliran": kondisi_aliran,
+            "Karakteristik Fisik": karakteristik_ fisik_str,
+            "Kondisi Area/Aktivitas": kondisi_area,
+            "Kondisi IPAL": kondisi_ipal,
+            "Kondisi Kolam Filtrasi": kondisi_kolam,
+            "Keamanan & Jalur": keamanan,
+            "Potensi Kontaminasi": kontaminasi,
+            "Catatan": catatan,
+        }
+        save_data(data_baru)
+        st.success(
+            "Data checklist berhasil disimpan dan dapat dilihat oleh tim lain!"
+        )
+
+elif menu == "📊 Lihat Riwayat & Data Tim":
+  st.subheader("Riwayat Data Pemantauan (Akses Bersama)")
+
+  if df_db.empty:
+    st.info(
+        "Belum ada data yang di-input. Silakan isi melalui menu 'Input"
+        " Checklist Baru'."
+    )
+  else:
+    # Filter pencarian
+    search_query = st.text_input(
+        "🔍 Cari Berdasarkan Petugas / Titik Sampling:", ""
+    )
+    if search_query:
+      filtered_df = df_db[
+          df_db["Petugas"].str.contains(search_query, case=False, na=False)
+          | df_db["Titik Sampling"].str.contains(
+              search_query, case=False, na=False
+          )
+      ]
+    else:
+      filtered_df = df_db
+
+    st.dataframe(filtered_df, use_container_width=True)
+
+    # Tombol Download ke CSV/Excel
+    csv = filtered_df.to_csv(index=False).encode("utf-8")
+    st.download_button(
+        label="📥 Download Data (CSV / Excel Format)",
+        data=csv,
+        file_name="rekap_pemantauan_air_limbah.csv",
+        mime="text/csv",
+    )
