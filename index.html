@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checklist Pemantauan Air Limbah</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f7f6; margin: 0; padding: 20px; }
+        .container { max-width: 600px; background: white; padding: 25px; margin: auto; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h2 { color: #0284c7; text-align: center; }
+        label { font-weight: bold; display: block; margin-top: 15px; font-size: 14px; }
+        input, select, textarea { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { background: #0284c7; color: white; border: none; padding: 12px; width: 100%; margin-top: 20px; font-size: 16px; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0369a1; }
+        #loading { display: none; text-align: center; color: green; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Checklist Pemantauan Lapangan Air Limbah</h2>
+    <form id="checklistForm">
+        <label>Nama Petugas / Sampler</label>
+        <input type="text" name="Petugas" required>
+
+        <label>Titik Sampling</label>
+        <select name="Titik_Sampling">
+            <option value="Outlet Utama IPAL">Outlet Utama IPAL</option>
+            <option value="Inlet Produksi">Inlet Produksi</option>
+            <option value="Bak Kontrol Akhir">Bak Kontrol Akhir</option>
+        </select>
+
+        <label>Kondisi Cuaca</label>
+        <select name="Cuaca">
+            <option value="Cerah">Cerah</option>
+            <option value="Mendung">Mendung</option>
+            <option value="Hujan">Hujan</option>
+        </select>
+
+        <label>1. Kondisi Aliran Air Limbah</label>
+        <select name="Aliran">
+            <option value="Normal">Normal</option>
+            <option value="Meluap">Meluap / Banjir</option>
+            <option value="Tersendat">Tersendat</option>
+            <option value="Surut">Surut / Kering</option>
+        </select>
+
+        <label>2. Kondisi Sistem IPAL</label>
+        <select name="IPAL">
+            <option value="Beroperasi Normal">Beroperasi Normal</option>
+            <option value="Kerusakan Pompa">Ada Kerusakan Alat / Pompa</option>
+            <option value="Maintenance">Sedang Maintenance / Pengurasan</option>
+        </select>
+
+        <label>Catatan Lapangan</label>
+        <textarea name="Catatan" rows="3"></textarea>
+
+        <button type="submit" id="submitBtn">Kirim Data</button>
+        <div id="loading">Menyimpan data ke sistem...</div>
+    </form>
+</div>
+
+<script>
+    const scriptURL = 'URL_GOOGLE_SCRIPT_ANDA_DI_SINI'; // https://script.google.com/macros/s/AKfycbyvKCJc-DmjL21XO808g1G3wn3qqvutA3FJVytGZ8F3Gt3oTVBi3T4DoZpNoqh0bssT/exec
+    const form = document.getElementById('checklistForm');
+    const loading = document.getElementById('loading');
+
+    form.addEventListener('submit', e => {
+        e.preventDefault();
+        loading.style.display = 'block';
+        
+        fetch(scriptURL, { method: 'POST', body: new FormData(form)})
+            .then(response => {
+                alert('Data checklist berhasil dikirim!');
+                loading.style.display = 'none';
+                form.reset();
+            })
+            .catch(error => {
+                alert('Terjadi kesalahan!', error.message);
+                loading.style.display = 'none';
+            });
+    });
+</script>
+
+</body>
+</html>
